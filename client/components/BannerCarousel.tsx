@@ -64,7 +64,7 @@ export function BannerCarousel({ items }: { items: BannerItem[] }) {
     >
       <div className="overflow-hidden w-full" ref={emblaRef}>
         <div className="flex touch-pan-y">
-          {items.map((item) => (
+          {items.map((item, idx) => (
             <Link
               key={item.id}
               to={`/anime/${item.id}`}
@@ -75,6 +75,9 @@ export function BannerCarousel({ items }: { items: BannerItem[] }) {
                   <img
                     src={item.image}
                     alt={item.title}
+                    loading={idx === 0 ? "eager" : "lazy"}
+                    decoding="async"
+                    fetchpriority={idx === 0 ? ("high" as any) : ("auto" as any)}
                     className="h-full w-full object-cover brightness-90 transition-transform duration-500 hover:scale-[1.02]"
                   />
                 </div>
