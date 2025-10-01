@@ -5,7 +5,7 @@ import {
   getFirebaseAsync,
   isFirebaseConfigured,
 } from "../lib/firebase";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile, signInAnonymously } from "firebase/auth";
 
 export default function Signup() {
   const [configured, setConfigured] = useState(isFirebaseConfigured());
@@ -43,6 +43,27 @@ export default function Signup() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function onAnonymous() {
+    setLoading(true);
+    setError(null);
+    try {
+      const lazy = (await getFirebaseAsync()) || getFirebase();
+      await signInAnonymously(lazy.auth);
+      window.location.href = "/";
+    } catch (err: any) {
+      setError(err?.message || "Anonymous sign-in failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function continueAsGuest() {
+    try {
+      localStorage.setItem("koanime_guest", "1");
+    } catch {}
+    window.location.href = "/";
   }
 
   return (
@@ -102,6 +123,21 @@ export default function Signup() {
               {loading ? "Creating…" : "Sign up"}
             </button>
           </form>
+          <div className="mt-4 space-y-2">
+            <button
+              onClick={onAnonymous}
+              className="w-full rounded-md border px-3 py-2 text-sm"
+              disabled={!configured || loading}
+            >
+              {loading ? "Please wait…" : "Sign in anonymously"}
+            </button>
+            <button
+              onClick={continueAsGuest}
+              className="w-full rounded-md border px-3 py-2 text-sm"
+            >
+              Continue without account
+            </button>
+          </div>
           <div className="mt-4 text-center text-sm">
             Already have an account?{" "}
             <a href="/login" className="text-primary underline">
