@@ -34,6 +34,20 @@ export function createServer() {
 
   app.get("/api/demo", handleDemo);
 
+  // Expose Firebase config (for clients when build-time envs are absent)
+  app.get("/api/firebase/config", (_req, res) => {
+    const cfg = {
+      apiKey: process.env.VITE_FIREBASE_API_KEY || null,
+      authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN || null,
+      projectId: process.env.VITE_FIREBASE_PROJECT_ID || null,
+      storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET || null,
+      messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID || null,
+      appId: process.env.VITE_FIREBASE_APP_ID || null,
+      measurementId: process.env.VITE_FIREBASE_MEASUREMENT_ID || null,
+    };
+    res.json({ config: cfg });
+  });
+
   // Anime API proxies (Jikan)
   app.get("/api/anime/trending", getTrending);
   app.get("/api/anime/search", getSearch);
