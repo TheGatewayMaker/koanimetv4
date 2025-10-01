@@ -1,24 +1,39 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Layout } from "../components/Layout";
-import { getFirebase, isFirebaseConfigured } from "../lib/firebase";
+import {
+  getFirebase,
+  getFirebaseAsync,
+  isFirebaseConfigured,
+} from "../lib/firebase";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 
 export default function Signup() {
-  const configured = isFirebaseConfigured();
+  const [configured, setConfigured] = useState(isFirebaseConfigured());
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!configured) {
+      getFirebaseAsync().then((res) => {
+        if (res) setConfigured(true);
+      });
+    }
+  }, [configured]);
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!configured) return;
     setLoading(true);
     setError(null);
     try {
-      const { auth } = getFirebase();
-      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      const lazy = (await getFirebaseAsync()) || getFirebase();
+      const cred = await createUserWithEmailAndPassword(
+        lazy.auth,
+        email,
+        password,
+      );
       if (name) {
         await updateProfile(cred.user, { displayName: name });
       }
