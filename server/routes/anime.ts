@@ -89,6 +89,8 @@ function mapJikanAnimeToSummary(a: any) {
   const image =
     a?.images?.jpg?.large_image_url ||
     a?.images?.jpg?.image_url ||
+    a?.images?.webp?.large_image_url ||
+    a?.images?.webp?.image_url ||
     a?.image_url ||
     "";
   const type = a?.type || undefined;
@@ -175,6 +177,33 @@ export const getTrending: RequestHandler = async (_req, res) => {
       if (j) setCached(key, j);
     }
     let results = ((j?.data as any[]) || []).map(mapJikanAnimeToSummary);
+
+    // Enrich with AniList extraLarge cover images for higher quality banners
+    try {
+      const ids = results
+        .map((r) => (typeof r.id === "number" ? r.id : Number(r.id)))
+        .filter((n) => Number.isFinite(n))
+        .slice(0, 50);
+      if (ids.length) {
+        const al = await gql<any>(
+          `query($ids:[Int]){ Page(perPage:50){ media(idMal_in:$ids, type:ANIME){ idMal coverImage{ extraLarge large } } } }`,
+          { ids },
+          12000,
+        );
+        const list: any[] = al?.Page?.media || [];
+        const byMal: Record<number, string> = {};
+        for (const m of list) {
+          const idMal = Number(m?.idMal);
+          const img = m?.coverImage?.extraLarge || m?.coverImage?.large || "";
+          if (idMal && img) byMal[idMal] = img;
+        }
+        results = results.map((r) =>
+          byMal[r.id as number] ? { ...r, image: byMal[r.id as number] } : r,
+        );
+      }
+    } catch {
+      // optional enrichment best-effort
+    }
 
     if (!results.length) {
       const dj = await fetchDex("/gogoPopular/1");
