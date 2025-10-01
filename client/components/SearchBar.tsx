@@ -45,13 +45,33 @@ export function SearchBar({
     }
     setLoading(true);
     try {
-      const res = await fetch(`/api/anime/search?q=${encodeURIComponent(q)}`);
+      if (abortRef.current) abortRef.current.abort();
+      const ctl = new AbortController();
+      abortRef.current = ctl;
+      const res = await fetch(`/api/anime/search?q=${encodeURIComponent(q)}`, {
+        signal: ctl.signal,
+      });
+      if (!res.ok) throw new Error("Search failed");
       const data = await res.json();
       setResults(data.results ?? []);
       setOpen(true);
     } catch (e) {
-      setResults([]);
-      setOpen(false);
+      try {
+        const tRes = await fetch("/api/anime/trending");
+        const tData = await tRes.json();
+        const items: SearchItem[] = (tData.results || []).slice(0, 10).map((a: any) => ({
+          mal_id: a.id,
+          title: a.title,
+          image_url: a.image,
+          type: a.type,
+          year: a.year ?? null,
+        }));
+        setResults(items);
+        setOpen(true);
+      } catch {
+        setResults([]);
+        setOpen(false);
+      }
     } finally {
       setLoading(false);
     }
