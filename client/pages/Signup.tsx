@@ -5,7 +5,11 @@ import {
   getFirebaseAsync,
   isFirebaseConfigured,
 } from "../lib/firebase";
-import { createUserWithEmailAndPassword, updateProfile, signInAnonymously } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  updateProfile,
+  signInAnonymously,
+} from "firebase/auth";
 
 export default function Signup() {
   const [configured, setConfigured] = useState(isFirebaseConfigured());

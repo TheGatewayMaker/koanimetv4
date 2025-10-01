@@ -282,8 +282,10 @@ export const getSearch: RequestHandler = async (req, res) => {
       if (Array.isArray(a?.titles))
         titles.push(...a.titles.map((t: any) => t?.title).filter(Boolean));
       let s = scoreText(titles);
-      if (typeof a?.members === "number") s += Math.min(10, Math.floor(a.members / 100000));
-      if (typeof a?.favorites === "number") s += Math.min(10, Math.floor(a.favorites / 10000));
+      if (typeof a?.members === "number")
+        s += Math.min(10, Math.floor(a.members / 100000));
+      if (typeof a?.favorites === "number")
+        s += Math.min(10, Math.floor(a.favorites / 10000));
       return {
         key: Number(a?.mal_id) || null,
         score: s,
@@ -300,16 +302,25 @@ export const getSearch: RequestHandler = async (req, res) => {
     function fromAniList(m: any) {
       const idMal = Number(m?.idMal) || null;
       if (!idMal) return null;
-      const titles = [m?.title?.english, m?.title?.romaji, m?.title?.native].filter(Boolean) as string[];
+      const titles = [
+        m?.title?.english,
+        m?.title?.romaji,
+        m?.title?.native,
+      ].filter(Boolean) as string[];
       let s = scoreText(titles);
-      if (typeof m?.averageScore === "number") s += Math.round(m.averageScore / 10);
-      if (typeof m?.popularity === "number") s += Math.min(10, Math.floor(m.popularity / 10000));
+      if (typeof m?.averageScore === "number")
+        s += Math.round(m.averageScore / 10);
+      if (typeof m?.popularity === "number")
+        s += Math.min(10, Math.floor(m.popularity / 10000));
       return {
         key: idMal,
         score: s + 3, // small bias toward AniList SEARCH_MATCH
         item: {
           mal_id: idMal,
-          title: (m?.title?.english || m?.title?.romaji || m?.title?.native || "") as string,
+          title: (m?.title?.english ||
+            m?.title?.romaji ||
+            m?.title?.native ||
+            "") as string,
           image_url: m?.coverImage?.extraLarge || m?.coverImage?.large || "",
           type: m?.format,
           year: m?.seasonYear ?? null,
@@ -324,7 +335,8 @@ export const getSearch: RequestHandler = async (req, res) => {
       const r = fromJikan(a);
       if (!r.key) continue;
       const prev = byId.get(r.key);
-      if (!prev || r.score > prev.score) byId.set(r.key, { score: r.score, item: r.item });
+      if (!prev || r.score > prev.score)
+        byId.set(r.key, { score: r.score, item: r.item });
     }
 
     for (const m of alRaw) {
@@ -334,7 +346,14 @@ export const getSearch: RequestHandler = async (req, res) => {
       if (!prev || r.score > prev.score) {
         byId.set(r.key, { score: r.score, item: r.item });
       } else if (prev && !prev.item.image_url && r.item.image_url) {
-        byId.set(r.key, { score: prev.score, item: { ...prev.item, image_url: r.item.image_url, title: r.item.title || prev.item.title } });
+        byId.set(r.key, {
+          score: prev.score,
+          item: {
+            ...prev.item,
+            image_url: r.item.image_url,
+            title: r.item.title || prev.item.title,
+          },
+        });
       }
     }
 
