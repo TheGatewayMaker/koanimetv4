@@ -59,13 +59,15 @@ export function SearchBar({
       try {
         const tRes = await fetch("/api/anime/trending");
         const tData = await tRes.json();
-        const items: SearchItem[] = (tData.results || []).slice(0, 10).map((a: any) => ({
-          mal_id: a.id,
-          title: a.title,
-          image_url: a.image,
-          type: a.type,
-          year: a.year ?? null,
-        }));
+        const items: SearchItem[] = (tData.results || [])
+          .slice(0, 10)
+          .map((a: any) => ({
+            mal_id: a.id,
+            title: a.title,
+            image_url: a.image,
+            type: a.type,
+            year: a.year ?? null,
+          }));
         setResults(items);
         setOpen(true);
       } catch {

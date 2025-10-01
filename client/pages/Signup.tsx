@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { Layout } from "../components/Layout";
-import { getFirebase, getFirebaseAsync, isFirebaseConfigured } from "../lib/firebase";
+import {
+  getFirebase,
+  getFirebaseAsync,
+  isFirebaseConfigured,
+} from "../lib/firebase";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 
 export default function Signup() {
@@ -25,7 +29,11 @@ export default function Signup() {
     setError(null);
     try {
       const lazy = (await getFirebaseAsync()) || getFirebase();
-      const cred = await createUserWithEmailAndPassword(lazy.auth, email, password);
+      const cred = await createUserWithEmailAndPassword(
+        lazy.auth,
+        email,
+        password,
+      );
       if (name) {
         await updateProfile(cred.user, { displayName: name });
       }

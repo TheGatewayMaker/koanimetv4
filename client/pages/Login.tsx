@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { Layout } from "../components/Layout";
-import { getFirebase, getFirebaseAsync, isFirebaseConfigured } from "../lib/firebase";
+import {
+  getFirebase,
+  getFirebaseAsync,
+  isFirebaseConfigured,
+} from "../lib/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 
 export default function Login() {
