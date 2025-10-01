@@ -18,6 +18,7 @@ export function SearchBar({
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   const debounced = useMemo(() => {
     let t: any;
