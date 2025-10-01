@@ -1,23 +1,30 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Layout } from "../components/Layout";
-import { getFirebase, isFirebaseConfigured } from "../lib/firebase";
+import { getFirebase, getFirebaseAsync, isFirebaseConfigured } from "../lib/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 
 export default function Login() {
-  const configured = isFirebaseConfigured();
+  const [configured, setConfigured] = useState(isFirebaseConfigured());
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!configured) {
+      getFirebaseAsync().then((res) => {
+        if (res) setConfigured(true);
+      });
+    }
+  }, [configured]);
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!configured) return;
     setLoading(true);
     setError(null);
     try {
-      const { auth } = getFirebase();
-      await signInWithEmailAndPassword(auth, email, password);
+      const lazy = (await getFirebaseAsync()) || getFirebase();
+      await signInWithEmailAndPassword(lazy.auth, email, password);
       window.location.href = "/";
     } catch (err: any) {
       setError(err?.message || "Login failed");
