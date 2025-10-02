@@ -20,7 +20,12 @@ export const postProgress: RequestHandler = async (req, res) => {
     const aId = Number(animeId);
     const ep = Number(episode);
     const pos = Number(position);
-    if (!Number.isFinite(aId) || !Number.isFinite(ep) || !Number.isFinite(pos) || pos < 0) {
+    if (
+      !Number.isFinite(aId) ||
+      !Number.isFinite(ep) ||
+      !Number.isFinite(pos) ||
+      pos < 0
+    ) {
       return res.status(400).json({ error: "Invalid payload" });
     }
     const history = await upsertWatchProgress(userId, {

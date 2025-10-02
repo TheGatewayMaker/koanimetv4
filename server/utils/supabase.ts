@@ -27,12 +27,23 @@ export async function supabaseSelect(table: string, qs = "") {
 export async function supabaseInsert(table: string, body: any, params = "") {
   if (!URL || !SERVICE_ROLE) throw new Error("Supabase not configured");
   const u = `${restUrl(table)}${params}`;
-  const res = await fetch(u, { method: "POST", headers: headers(true), body: JSON.stringify(body) });
-  if (!res.ok) throw new Error(`Supabase insert failed: ${res.status} ${await res.text()}`);
+  const res = await fetch(u, {
+    method: "POST",
+    headers: headers(true),
+    body: JSON.stringify(body),
+  });
+  if (!res.ok)
+    throw new Error(
+      `Supabase insert failed: ${res.status} ${await res.text()}`,
+    );
   return await res.json();
 }
 
-export async function supabaseUpsert(table: string, body: any, on_conflict = "id") {
+export async function supabaseUpsert(
+  table: string,
+  body: any,
+  on_conflict = "id",
+) {
   if (!URL || !SERVICE_ROLE) throw new Error("Supabase not configured");
   const params = `?on_conflict=${encodeURIComponent(on_conflict)}`;
   return await supabaseInsert(table, body, params);
@@ -41,7 +52,12 @@ export async function supabaseUpsert(table: string, body: any, on_conflict = "id
 export async function supabasePatch(table: string, qs = "", body: any) {
   if (!URL || !SERVICE_ROLE) throw new Error("Supabase not configured");
   const u = `${restUrl(table)}${qs}`;
-  const res = await fetch(u, { method: "PATCH", headers: headers(true), body: JSON.stringify(body) });
-  if (!res.ok) throw new Error(`Supabase patch failed: ${res.status} ${await res.text()}`);
+  const res = await fetch(u, {
+    method: "PATCH",
+    headers: headers(true),
+    body: JSON.stringify(body),
+  });
+  if (!res.ok)
+    throw new Error(`Supabase patch failed: ${res.status} ${await res.text()}`);
   return await res.json();
 }

@@ -244,7 +244,12 @@ export const getSearch: RequestHandler = async (req, res) => {
       const t: string[] = [];
       if (item?.title) t.push(String(item.title));
       if (item?.title_english) t.push(String(item.title_english));
-      if (Array.isArray(item?.titles)) t.push(...item.titles.map((x: any) => String(x?.title || "")).filter(Boolean));
+      if (Array.isArray(item?.titles))
+        t.push(
+          ...item.titles
+            .map((x: any) => String(x?.title || ""))
+            .filter(Boolean),
+        );
       return t.map(norm).filter(Boolean);
     }
 
@@ -293,8 +298,10 @@ export const getSearch: RequestHandler = async (req, res) => {
           if (hay.includes(t)) s += 5;
           if (hay.startsWith(t)) s += 2;
         }
-        if (typeof item?.members === "number") s += Math.min(10, Math.floor(item.members / 100000));
-        if (typeof item?.favorites === "number") s += Math.min(10, Math.floor(item.favorites / 10000));
+        if (typeof item?.members === "number")
+          s += Math.min(10, Math.floor(item.members / 100000));
+        if (typeof item?.favorites === "number")
+          s += Math.min(10, Math.floor(item.favorites / 10000));
         return s;
       }
 

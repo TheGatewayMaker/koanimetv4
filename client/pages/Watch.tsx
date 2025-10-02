@@ -4,7 +4,8 @@ import { Layout } from "../components/Layout";
 import { useAuth } from "../providers/AuthProvider";
 import { fetchAnimeInfo } from "../lib/anime";
 
-const SAMPLE_SRC = "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4";
+const SAMPLE_SRC =
+  "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4";
 
 export default function Watch() {
   const params = useParams();
@@ -28,7 +29,9 @@ export default function Watch() {
   return (
     <Layout>
       <div className="container mx-auto px-4 py-6">
-        <h1 className="text-xl font-bold">{title || `Anime ${id}`} — Episode {episode}</h1>
+        <h1 className="text-xl font-bold">
+          {title || `Anime ${id}`} — Episode {episode}
+        </h1>
         {!user && (
           <div className="mt-2 rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-200">
             Log in to save your watch progress automatically.
@@ -49,7 +52,13 @@ export default function Watch() {
   );
 }
 
-function VideoPlayer({ src, onProgress }: { src: string; onProgress: (sec: number) => void }) {
+function VideoPlayer({
+  src,
+  onProgress,
+}: {
+  src: string;
+  onProgress: (sec: number) => void;
+}) {
   const ref = useRef<HTMLVideoElement | null>(null);
   const [lastSent, setLastSent] = useState(0);
 
@@ -82,6 +91,12 @@ function VideoPlayer({ src, onProgress }: { src: string; onProgress: (sec: numbe
   }, [onProgress, lastSent]);
 
   return (
-    <video ref={ref} className="w-full max-w-[1000px] rounded-md border bg-black" src={src} controls autoPlay />
+    <video
+      ref={ref}
+      className="w-full max-w-[1000px] rounded-md border bg-black"
+      src={src}
+      controls
+      autoPlay
+    />
   );
 }

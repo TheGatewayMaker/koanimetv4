@@ -110,8 +110,15 @@ export function Header() {
             </>
           ) : (
             <div className="flex items-center gap-2">
-              <span className="hidden sm:inline text-sm text-foreground/70">Hi, {user.username}</span>
-              <button onClick={logout} className="rounded-md border px-3 py-2 hover:bg-accent">Log out</button>
+              <span className="hidden sm:inline text-sm text-foreground/70">
+                Hi, {user.username}
+              </span>
+              <button
+                onClick={logout}
+                className="rounded-md border px-3 py-2 hover:bg-accent"
+              >
+                Log out
+              </button>
             </div>
           )}
         </div>
@@ -211,7 +218,15 @@ export function Header() {
                   </Link>
                 </div>
               ) : (
-                <button onClick={() => { setOpen(false); logout(); }} className="mt-4 w-full rounded-md border px-3 py-2 hover:bg-accent">Log out</button>
+                <button
+                  onClick={() => {
+                    setOpen(false);
+                    logout();
+                  }}
+                  className="mt-4 w-full rounded-md border px-3 py-2 hover:bg-accent"
+                >
+                  Log out
+                </button>
               )}
             </nav>
           </div>

@@ -1,5 +1,10 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import type { AuthResponse, AuthUser, ContinueWatchingResponse, WatchEntry } from "@shared/api";
+import type {
+  AuthResponse,
+  AuthUser,
+  ContinueWatchingResponse,
+  WatchEntry,
+} from "@shared/api";
 
 interface AuthContextValue {
   user: AuthUser | null;
@@ -9,7 +14,13 @@ interface AuthContextValue {
   signup: (username: string, password: string) => Promise<void>;
   logout: () => void;
   getContinue: () => Promise<WatchEntry[]>;
-  postProgress: (p: { animeId: number; episode: number; position: number; title?: string; image?: string }) => Promise<void>;
+  postProgress: (p: {
+    animeId: number;
+    episode: number;
+    position: number;
+    title?: string;
+    image?: string;
+  }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -34,11 +45,21 @@ function useStoredAuth() {
   return { user, setUser, token, setToken } as const;
 }
 
-async function api<T = any>(path: string, init: RequestInit = {}, token?: string | null): Promise<T> {
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
+async function api<T = any>(
+  path: string,
+  init: RequestInit = {},
+  token?: string | null,
+): Promise<T> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
   if (token) headers["Authorization"] = `Bearer ${token}`;
   const res = await fetch(path, { ...init, headers });
-  if (!res.ok) throw new Error((await res.json().catch(() => ({})))?.error || `Request failed: ${res.status}`);
+  if (!res.ok)
+    throw new Error(
+      (await res.json().catch(() => ({})))?.error ||
+        `Request failed: ${res.status}`,
+    );
   return (await res.json()) as T;
 }
 
@@ -50,7 +71,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     (async () => {
       try {
         if (!token) return;
-        const me = await api<AuthUser>("/api/auth/me", { method: "GET" }, token);
+        const me = await api<AuthUser>(
+          "/api/auth/me",
+          { method: "GET" },
+          token,
+        );
         setUser(me);
       } catch {
         setUser(null);
@@ -61,34 +86,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })();
   }, []);
 
-  const value = useMemo<AuthContextValue>(() => ({
-    user: user || null,
-    token: token || null,
-    loading,
-    async login(username: string, password: string) {
-      const res = await api<AuthResponse>("/api/auth/login", { method: "POST", body: JSON.stringify({ username, password }) });
-      setUser(res.user);
-      setToken(res.token);
-    },
-    async signup(username: string, password: string) {
-      const res = await api<AuthResponse>("/api/auth/signup", { method: "POST", body: JSON.stringify({ username, password }) });
-      setUser(res.user);
-      setToken(res.token);
-    },
-    logout() {
-      setUser(null);
-      setToken(null);
-    },
-    async getContinue() {
-      if (!token) return [];
-      const res = await api<ContinueWatchingResponse>("/api/user/continue", { method: "GET" }, token);
-      return res.history;
-    },
-    async postProgress(p) {
-      if (!token) return;
-      await api("/api/user/progress", { method: "POST", body: JSON.stringify(p) }, token);
-    },
-  }), [user, token, loading]);
+  const value = useMemo<AuthContextValue>(
+    () => ({
+      user: user || null,
+      token: token || null,
+      loading,
+      async login(username: string, password: string) {
+        const res = await api<AuthResponse>("/api/auth/login", {
+          method: "POST",
+          body: JSON.stringify({ username, password }),
+        });
+        setUser(res.user);
+        setToken(res.token);
+      },
+      async signup(username: string, password: string) {
+        const res = await api<AuthResponse>("/api/auth/signup", {
+          method: "POST",
+          body: JSON.stringify({ username, password }),
+        });
+        setUser(res.user);
+        setToken(res.token);
+      },
+      logout() {
+        setUser(null);
+        setToken(null);
+      },
+      async getContinue() {
+        if (!token) return [];
+        const res = await api<ContinueWatchingResponse>(
+          "/api/user/continue",
+          { method: "GET" },
+          token,
+        );
+        return res.history;
+      },
+      async postProgress(p) {
+        if (!token) return;
+        await api(
+          "/api/user/progress",
+          { method: "POST", body: JSON.stringify(p) },
+          token,
+        );
+      },
+    }),
+    [user, token, loading],
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
