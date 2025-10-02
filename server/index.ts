@@ -60,6 +60,16 @@ export function createServer() {
   app.get("/api/user/continue", authRequired, getContinueWatching);
   app.post("/api/user/progress", authRequired, postProgress);
 
+  // Supabase migration (one-time)
+  if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    try {
+      const { migrateToSupabase } = await import("./routes/supabase");
+      app.post("/api/supabase/migrate", migrateToSupabase);
+    } catch (e) {
+      // ignore
+    }
+  }
+
   // Anime API proxies (Jikan)
   app.get("/api/anime/trending", getTrending);
   app.get("/api/anime/search", getSearch);
