@@ -17,6 +17,9 @@ import {
   getAniListInfo,
   getAniListEpisodes,
 } from "./routes/anilist";
+import { authRequired } from "./utils/auth";
+import { login, me, signup } from "./routes/auth";
+import { getContinueWatching, postProgress } from "./routes/user";
 
 export function createServer() {
   const app = express();
@@ -47,6 +50,15 @@ export function createServer() {
     };
     res.json({ config: cfg });
   });
+
+  // Auth routes
+  app.post("/api/auth/signup", signup);
+  app.post("/api/auth/login", login);
+  app.get("/api/auth/me", authRequired, me);
+
+  // User progress routes
+  app.get("/api/user/continue", authRequired, getContinueWatching);
+  app.post("/api/user/progress", authRequired, postProgress);
 
   // Anime API proxies (Jikan)
   app.get("/api/anime/trending", getTrending);
