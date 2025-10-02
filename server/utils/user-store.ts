@@ -52,15 +52,17 @@ async function writeDb(db: DbSchema): Promise<void> {
   await fs.rename(tmp, DB_PATH);
 }
 
-let writeQueue = Promise.resolve();
-async function withWrite<T>(fn: (db: DbSchema) => Promise<T>): Promise<T> {
-  writeQueue = writeQueue.then(async () => {
+let writeQueue: Promise<any> = Promise.resolve();
+function withWrite<T>(fn: (db: DbSchema) => Promise<T>): Promise<T> {
+  const p = writeQueue.then(async () => {
     const db = await readDb();
     const res = await fn(db);
     await writeDb(db);
     return res;
   });
-  return writeQueue as unknown as T;
+  // keep queue alive even if a task fails
+  writeQueue = p.catch(() => undefined);
+  return p as Promise<T>;
 }
 
 const USE_SUPABASE = Boolean(
