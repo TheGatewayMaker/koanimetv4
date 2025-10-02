@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useState } from "react";
 import { Layout } from "../components/Layout";
 import { useAuth } from "../providers/AuthProvider";
 
@@ -27,9 +28,7 @@ export default function Signup() {
     <Layout>
       <div className="container mx-auto px-4 py-12">
         <div className="mx-auto w-full max-w-md rounded-xl border p-6 shadow-sm">
-          <h1 className="text-center text-2xl font-bold">
-            Create your account
-          </h1>
+          <h1 className="text-center text-2xl font-bold">Create your account</h1>
           <p className="mt-1 text-center text-sm text-foreground/70">
             Join KoAnime to track your watch history
           </p>
@@ -65,10 +64,7 @@ export default function Signup() {
             </button>
           </form>
           <div className="mt-4 text-center text-sm">
-            Already have an account?{" "}
-            <a href="/login" className="text-primary underline">
-              Log in
-            </a>
+            Already have an account? <a href="/login" className="text-primary underline">Log in</a>
           </div>
         </div>
       </div>
