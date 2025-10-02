@@ -10,3 +10,26 @@
 export interface DemoResponse {
   message: string;
 }
+
+export interface AuthUser {
+  id: string;
+  username: string;
+  createdAt: number;
+}
+export interface AuthResponse {
+  token: string;
+  user: AuthUser;
+}
+
+export interface WatchEntry {
+  animeId: number;
+  episode: number;
+  position: number; // seconds
+  title?: string;
+  image?: string;
+  updatedAt: number;
+}
+
+export interface ContinueWatchingResponse {
+  history: WatchEntry[];
+}

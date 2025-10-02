@@ -77,7 +77,7 @@ export function BannerCarousel({ items }: { items: BannerItem[] }) {
                     alt={item.title}
                     loading={idx === 0 ? "eager" : "lazy"}
                     decoding="async"
-                    fetchpriority={
+                    fetchPriority={
                       idx === 0 ? ("high" as any) : ("auto" as any)
                     }
                     className="h-full w-full object-cover brightness-90 transition-transform duration-500 hover:scale-[1.02]"

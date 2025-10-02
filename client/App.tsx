@@ -14,30 +14,35 @@ import Schedule from "./pages/Schedule";
 import Watchlist from "./pages/Watchlist";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import Watch from "./pages/Watch";
 import { ThemeProvider } from "./providers/ThemeProvider";
+import { AuthProvider } from "./providers/AuthProvider";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/anime/:id" element={<Anime />} />
-            <Route path="/discover" element={<Discover />} />
-            <Route path="/schedule" element={<Schedule />} />
-            <Route path="/watchlist" element={<Watchlist />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/anime/:id" element={<Anime />} />
+              <Route path="/discover" element={<Discover />} />
+              <Route path="/schedule" element={<Schedule />} />
+              <Route path="/watchlist" element={<Watchlist />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/watch/:id" element={<Watch />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );

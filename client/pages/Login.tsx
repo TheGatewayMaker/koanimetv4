@@ -1,34 +1,20 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Layout } from "../components/Layout";
-import {
-  getFirebase,
-  getFirebaseAsync,
-  isFirebaseConfigured,
-} from "../lib/firebase";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { useAuth } from "../providers/AuthProvider";
 
 export default function Login() {
-  const [configured, setConfigured] = useState(isFirebaseConfigured());
-  const [email, setEmail] = useState("");
+  const { login } = useAuth();
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!configured) {
-      getFirebaseAsync().then((res) => {
-        if (res) setConfigured(true);
-      });
-    }
-  }, [configured]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
     try {
-      const lazy = (await getFirebaseAsync()) || getFirebase();
-      await signInWithEmailAndPassword(lazy.auth, email, password);
+      await login(username, password);
       window.location.href = "/";
     } catch (err: any) {
       setError(err?.message || "Login failed");
@@ -45,21 +31,14 @@ export default function Login() {
           <p className="mt-1 text-center text-sm text-foreground/70">
             Log in to continue watching
           </p>
-          {!configured && (
-            <div className="mt-3 rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-200">
-              Firebase isn't configured. Add VITE_FIREBASE_* env vars in project
-              settings to enable authentication.
-            </div>
-          )}
           <form className="mt-6 space-y-3" onSubmit={onSubmit}>
             <div>
-              <label className="text-sm">Email</label>
+              <label className="text-sm">Username</label>
               <input
-                type="email"
                 className="mt-1 w-full rounded-md border bg-background px-3 py-2"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                placeholder="your_username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 required
               />
             </div>
@@ -78,7 +57,7 @@ export default function Login() {
             <button
               type="submit"
               className="mt-2 w-full rounded-md bg-primary px-3 py-2 font-semibold text-primary-foreground"
-              disabled={!configured || loading}
+              disabled={loading}
             >
               {loading ? "Signing in…" : "Log in"}
             </button>
