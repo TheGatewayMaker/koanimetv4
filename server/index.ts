@@ -62,12 +62,15 @@ export function createServer() {
 
   // Supabase migration (one-time)
   if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    try {
-      const { migrateToSupabase } = await import("./routes/supabase");
-      app.post("/api/supabase/migrate", migrateToSupabase);
-    } catch (e) {
-      // ignore
-    }
+    import("./routes/supabase")
+      .then((mod) => {
+        if (mod && typeof mod.migrateToSupabase === "function") {
+          app.post("/api/supabase/migrate", mod.migrateToSupabase);
+        }
+      })
+      .catch(() => {
+        // ignore
+      });
   }
 
   // Anime API proxies (Jikan)
