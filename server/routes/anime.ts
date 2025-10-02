@@ -231,43 +231,137 @@ export const getSearch: RequestHandler = async (req, res) => {
     const q = String(req.query.q || "").trim();
     if (!q) return res.json({ results: [] });
 
-    const url = `${JIKAN_BASE}/anime?q=${encodeURIComponent(q)}&limit=30&sfw&order_by=members&sort=desc`;
-    const j = await fetchJson(url, 12000);
-    const raw: any[] = (j?.data as any[]) || [];
-
     const norm = (s: string) => s.toLowerCase();
     const tokens = norm(q).split(/\s+/).filter(Boolean);
-    function score(item: any): number {
-      const titles: string[] = [];
-      if (item?.title) titles.push(item.title);
-      if (item?.title_english) titles.push(item.title_english);
-      if (Array.isArray(item?.titles))
-        titles.push(...item.titles.map((t: any) => t?.title).filter(Boolean));
+
+    // Fetch Jikan + AniList in parallel for better recall + precision
+    const jikanUrl = `${JIKAN_BASE}/anime?q=${encodeURIComponent(q)}&limit=30&sfw&order_by=members&sort=desc`;
+    const [jikan, al] = await Promise.all([
+      fetchJson(jikanUrl, 12000),
+      gql<any>(
+        `query($q:String){
+          Page(page:1, perPage:30){
+            media(search:$q, type:ANIME, sort:[SEARCH_MATCH, POPULARITY_DESC]){
+              idMal
+              title{ romaji english native }
+              coverImage{ large extraLarge }
+              seasonYear
+              averageScore
+              format
+              popularity
+            }
+          }
+        }`,
+        { q },
+      ),
+    ]);
+
+    const jRaw: any[] = (jikan?.data as any[]) || [];
+    const alRaw: any[] = (al?.Page?.media as any[]) || [];
+
+    function scoreText(titles: string[]): number {
       const hay = norm(titles.join(" | "));
       let s = 0;
+      let matched = 0;
       for (const t of tokens) {
         if (!t) continue;
-        if (hay.includes(t)) s += 5;
+        if (hay.includes(t)) {
+          s += 6;
+          matched++;
+        }
         if (hay.startsWith(t)) s += 2;
       }
-      if (typeof item?.members === "number")
-        s += Math.min(10, Math.floor(item.members / 100000));
-      if (typeof item?.favorites === "number")
-        s += Math.min(10, Math.floor(item.favorites / 10000));
-      return s;
+      // Require at least one token match to be considered relevant
+      return matched > 0 ? s : -1e6;
     }
 
-    let ranked = raw
-      .map((a) => ({ a, s: score(a) }))
-      .sort((x, y) => y.s - x.s)
+    function fromJikan(a: any) {
+      const titles: string[] = [];
+      if (a?.title) titles.push(a.title);
+      if (a?.title_english) titles.push(a.title_english);
+      if (Array.isArray(a?.titles))
+        titles.push(...a.titles.map((t: any) => t?.title).filter(Boolean));
+      let s = scoreText(titles);
+      if (typeof a?.members === "number")
+        s += Math.min(10, Math.floor(a.members / 100000));
+      if (typeof a?.favorites === "number")
+        s += Math.min(10, Math.floor(a.favorites / 10000));
+      return {
+        key: Number(a?.mal_id) || null,
+        score: s,
+        item: {
+          mal_id: a?.mal_id,
+          title: a?.title_english || a?.title,
+          image_url: a?.images?.jpg?.image_url,
+          type: a?.type,
+          year: a?.year ?? null,
+        },
+      };
+    }
+
+    function fromAniList(m: any) {
+      const idMal = Number(m?.idMal) || null;
+      if (!idMal) return null;
+      const titles = [
+        m?.title?.english,
+        m?.title?.romaji,
+        m?.title?.native,
+      ].filter(Boolean) as string[];
+      let s = scoreText(titles);
+      if (typeof m?.averageScore === "number")
+        s += Math.round(m.averageScore / 10);
+      if (typeof m?.popularity === "number")
+        s += Math.min(10, Math.floor(m.popularity / 10000));
+      return {
+        key: idMal,
+        score: s + 3, // small bias toward AniList SEARCH_MATCH
+        item: {
+          mal_id: idMal,
+          title: (m?.title?.english ||
+            m?.title?.romaji ||
+            m?.title?.native ||
+            "") as string,
+          image_url: m?.coverImage?.extraLarge || m?.coverImage?.large || "",
+          type: m?.format,
+          year: m?.seasonYear ?? null,
+        },
+      };
+    }
+
+    // Merge by MAL id, keep best score and better image/title when available
+    const byId = new Map<number, { score: number; item: any }>();
+
+    for (const a of jRaw) {
+      const r = fromJikan(a);
+      if (!r.key) continue;
+      const prev = byId.get(r.key);
+      if (!prev || r.score > prev.score)
+        byId.set(r.key, { score: r.score, item: r.item });
+    }
+
+    for (const m of alRaw) {
+      const r = fromAniList(m);
+      if (!r) continue;
+      const prev = byId.get(r.key);
+      if (!prev || r.score > prev.score) {
+        byId.set(r.key, { score: r.score, item: r.item });
+      } else if (prev && !prev.item.image_url && r.item.image_url) {
+        byId.set(r.key, {
+          score: prev.score,
+          item: {
+            ...prev.item,
+            image_url: r.item.image_url,
+            title: r.item.title || prev.item.title,
+          },
+        });
+      }
+    }
+
+    let ranked = Array.from(byId.values())
+      .filter((v) => v.score > -1e5)
+      .sort((a, b) => b.score - a.score)
       .slice(0, 20)
-      .map(({ a }) => ({
-        mal_id: a?.mal_id,
-        title: a?.title_english || a?.title,
-        image_url: a?.images?.jpg?.image_url,
-        type: a?.type,
-        year: a?.year ?? null,
-      }));
+      .map((v) => v.item);
 
     if (!ranked.length) {
       const dj = await fetchDex(`/search/${encodeURIComponent(q)}`);
@@ -290,7 +384,6 @@ export const getSearch: RequestHandler = async (req, res) => {
 
     res.json({ results: ranked });
   } catch (e: any) {
-    // Fallback
     const q = String(req.query.q || "").trim();
     const dj = q ? await fetchDex(`/search/${encodeURIComponent(q)}`) : null;
     const arr: any[] = Array.isArray(dj)
