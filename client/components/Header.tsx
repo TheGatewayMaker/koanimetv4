@@ -2,10 +2,12 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { SearchBar } from "./SearchBar";
 import { ThemeToggle } from "./ThemeToggle";
+import { useAuth } from "../providers/AuthProvider";
 
 export function Header() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
   useEffect(() => {
     if (open) {
@@ -91,18 +93,27 @@ export function Header() {
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <Link
-            to="/login"
-            className="hidden sm:inline-flex rounded-md border px-3 py-2 hover:bg-accent"
-          >
-            Log in
-          </Link>
-          <Link
-            to="/signup"
-            className="hidden sm:inline-flex rounded-md bg-primary px-3 py-2 text-primary-foreground hover:opacity-90"
-          >
-            Sign up
-          </Link>
+          {!user ? (
+            <>
+              <Link
+                to="/login"
+                className="hidden sm:inline-flex rounded-md border px-3 py-2 hover:bg-accent"
+              >
+                Log in
+              </Link>
+              <Link
+                to="/signup"
+                className="hidden sm:inline-flex rounded-md bg-primary px-3 py-2 text-primary-foreground hover:opacity-90"
+              >
+                Sign up
+              </Link>
+            </>
+          ) : (
+            <div className="flex items-center gap-2">
+              <span className="hidden sm:inline text-sm text-foreground/70">Hi, {user.username}</span>
+              <button onClick={logout} className="rounded-md border px-3 py-2 hover:bg-accent">Log out</button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -182,22 +193,26 @@ export function Header() {
               >
                 Watchlist
               </NavLink>
-              <div className="mt-4 flex gap-2">
-                <Link
-                  to="/login"
-                  onClick={() => setOpen(false)}
-                  className="inline-flex flex-1 items-center justify-center rounded-md border px-3 py-2 hover:bg-accent"
-                >
-                  Log in
-                </Link>
-                <Link
-                  to="/signup"
-                  onClick={() => setOpen(false)}
-                  className="inline-flex flex-1 items-center justify-center rounded-md bg-primary px-3 py-2 text-primary-foreground hover:opacity-90"
-                >
-                  Sign up
-                </Link>
-              </div>
+              {!user ? (
+                <div className="mt-4 flex gap-2">
+                  <Link
+                    to="/login"
+                    onClick={() => setOpen(false)}
+                    className="inline-flex flex-1 items-center justify-center rounded-md border px-3 py-2 hover:bg-accent"
+                  >
+                    Log in
+                  </Link>
+                  <Link
+                    to="/signup"
+                    onClick={() => setOpen(false)}
+                    className="inline-flex flex-1 items-center justify-center rounded-md bg-primary px-3 py-2 text-primary-foreground hover:opacity-90"
+                  >
+                    Sign up
+                  </Link>
+                </div>
+              ) : (
+                <button onClick={() => { setOpen(false); logout(); }} className="mt-4 w-full rounded-md border px-3 py-2 hover:bg-accent">Log out</button>
+              )}
             </nav>
           </div>
         </div>
