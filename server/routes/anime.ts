@@ -235,57 +235,93 @@ export const getSearch: RequestHandler = async (req, res) => {
     const j = await fetchJson(url, 12000);
     const raw: any[] = (j?.data as any[]) || [];
 
-    const norm = (s: string) => s.toLowerCase();
-    const tokens = norm(q).split(/\s+/).filter(Boolean);
-    function score(item: any): number {
-      const titles: string[] = [];
-      if (item?.title) titles.push(item.title);
-      if (item?.title_english) titles.push(item.title_english);
-      if (Array.isArray(item?.titles))
-        titles.push(...item.titles.map((t: any) => t?.title).filter(Boolean));
-      const hay = norm(titles.join(" | "));
-      let s = 0;
-      for (const t of tokens) {
-        if (!t) continue;
-        if (hay.includes(t)) s += 5;
-        if (hay.startsWith(t)) s += 2;
-      }
-      if (typeof item?.members === "number")
-        s += Math.min(10, Math.floor(item.members / 100000));
-      if (typeof item?.favorites === "number")
-        s += Math.min(10, Math.floor(item.favorites / 10000));
-      return s;
+    const norm = (s: string) => (s || "").toLowerCase().trim();
+    const qNorm = norm(q);
+    const tokens = qNorm.split(/\s+/).filter(Boolean);
+
+    // Helper to extract candidate titles
+    function allTitles(item: any) {
+      const t: string[] = [];
+      if (item?.title) t.push(String(item.title));
+      if (item?.title_english) t.push(String(item.title_english));
+      if (Array.isArray(item?.titles)) t.push(...item.titles.map((x: any) => String(x?.title || "")).filter(Boolean));
+      return t.map(norm).filter(Boolean);
     }
 
-    let ranked = raw
-      .map((a) => ({ a, s: score(a) }))
-      .sort((x, y) => y.s - x.s)
-      .slice(0, 20)
-      .map(({ a }) => ({
-        mal_id: a?.mal_id,
-        title: a?.title_english || a?.title,
-        image_url: a?.images?.jpg?.image_url,
-        type: a?.type,
-        year: a?.year ?? null,
-      }));
+    // First pass: prioritize exact/full-substring matches
+    const exactMatches: any[] = [];
+    const startsWithMatches: any[] = [];
+    const partialMatches: any[] = [];
 
+    for (const a of raw) {
+      const titles = allTitles(a);
+      const hay = titles.join(" | ");
+      if (!hay) continue;
+      if (titles.some((t) => t === qNorm)) {
+        exactMatches.push(a);
+        continue;
+      }
+      if (hay.includes(qNorm)) {
+        startsWithMatches.push(a);
+        continue;
+      }
+      // token-based match: all tokens present
+      const allTokensPresent = tokens.every((tk) => hay.includes(tk));
+      if (allTokensPresent) partialMatches.push(a);
+    }
+
+    const concat = [...exactMatches, ...startsWithMatches, ...partialMatches];
+
+    const toResult = (a: any) => ({
+      mal_id: a?.mal_id ?? null,
+      title: a?.title_english || a?.title || "",
+      image_url: a?.images?.jpg?.image_url || "",
+      type: a?.type,
+      year: a?.year ?? null,
+    });
+
+    let ranked = concat.slice(0, 20).map(toResult);
+
+    // If nothing matched well, fallback to previous scoring + external dex
     if (!ranked.length) {
-      const dj = await fetchDex(`/search/${encodeURIComponent(q)}`);
-      const arr: any[] = Array.isArray(dj)
-        ? dj
-        : dj?.results || dj?.data || dj?.items || dj?.animes || [];
-      ranked = arr.slice(0, 20).map((a: any) => ({
-        mal_id: a?.mal_id ?? a?.id ?? a?.animeId ?? null,
-        title: a?.title ?? a?.name ?? a?.animeTitle ?? "",
-        image_url: a?.image ?? a?.img ?? a?.poster ?? "",
-        type: a?.type ?? a?.format ?? undefined,
-        year:
-          typeof a?.year === "number"
-            ? a.year
-            : typeof a?.releaseDate === "string"
-              ? Number((a.releaseDate.match(/\d{4}/) || [])[0]) || null
-              : null,
-      }));
+      function score(item: any): number {
+        const titles = allTitles(item);
+        const hay = titles.join(" |");
+        let s = 0;
+        for (const t of tokens) {
+          if (!t) continue;
+          if (hay.includes(t)) s += 5;
+          if (hay.startsWith(t)) s += 2;
+        }
+        if (typeof item?.members === "number") s += Math.min(10, Math.floor(item.members / 100000));
+        if (typeof item?.favorites === "number") s += Math.min(10, Math.floor(item.favorites / 10000));
+        return s;
+      }
+
+      ranked = raw
+        .map((a) => ({ a, s: score(a) }))
+        .sort((x, y) => y.s - x.s)
+        .slice(0, 20)
+        .map(({ a }) => toResult(a));
+
+      if (!ranked.length) {
+        const dj = await fetchDex(`/search/${encodeURIComponent(q)}`);
+        const arr: any[] = Array.isArray(dj)
+          ? dj
+          : dj?.results || dj?.data || dj?.items || dj?.animes || [];
+        ranked = arr.slice(0, 20).map((a: any) => ({
+          mal_id: a?.mal_id ?? a?.id ?? a?.animeId ?? null,
+          title: a?.title ?? a?.name ?? a?.animeTitle ?? "",
+          image_url: a?.image ?? a?.img ?? a?.poster ?? "",
+          type: a?.type ?? a?.format ?? undefined,
+          year:
+            typeof a?.year === "number"
+              ? a.year
+              : typeof a?.releaseDate === "string"
+                ? Number((a.releaseDate.match(/\d{4}/) || [])[0]) || null
+                : null,
+        }));
+      }
     }
 
     res.json({ results: ranked });
