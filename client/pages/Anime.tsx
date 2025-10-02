@@ -197,15 +197,10 @@ export default function AnimePage() {
             ) : (
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
                 {episodes.map((ep) => (
-                  <button
+                  <a
                     key={ep.id + "-" + ep.number}
                     className="rounded border px-3 py-2 text-left text-sm hover:bg-accent"
-                    onClick={() =>
-                      toast("Streaming links unavailable", {
-                        description: "Where to watch will be added later.",
-                        duration: 2500,
-                      })
-                    }
+                    href={`/watch/${id}?ep=${ep.number}`}
                   >
                     <div className="font-medium">Episode {ep.number}</div>
                     {ep.title && (
@@ -213,7 +208,7 @@ export default function AnimePage() {
                         {ep.title}
                       </div>
                     )}
-                  </button>
+                  </a>
                 ))}
               </div>
             )}
