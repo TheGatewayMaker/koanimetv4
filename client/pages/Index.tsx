@@ -4,6 +4,7 @@ import { BannerCarousel } from "../components/BannerCarousel";
 import type { BannerItem } from "../components/BannerCarousel";
 import { AnimeCard } from "../components/AnimeCard";
 import { fetchTrending, fetchNewReleases } from "../lib/anime";
+import { ContinueWatching } from "../components/ContinueWatching";
 
 const BANNERS: BannerItem[] = [
   {
@@ -128,6 +129,8 @@ export default function Index() {
           <BannerCarousel items={banner} />
         </div>
       </section>
+
+      <ContinueWatching />
 
       <section className="container mx-auto px-4 py-6 md:py-8">
         <h2 className="mb-4 text-lg font-semibold md:text-2xl">New Releases</h2>
